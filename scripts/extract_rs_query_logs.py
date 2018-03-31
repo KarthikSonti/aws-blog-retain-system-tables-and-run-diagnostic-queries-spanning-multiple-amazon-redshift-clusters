@@ -84,17 +84,17 @@ functions.updateLastProcessedTSValue(clusterId+"_stl_alert_event_log",latestTime
 #### STL_SCAN #####
 
 stlScanLastProcessedTSValue= functions.getLastProcessedTSValue(clusterId+"_stl_scan",job_configs)
-returnDF=functions.runQuery("select '{}' as clusterId,trunc(starttime) as startDate,* from stl_scan where starttime > '{}'".format(clusterId,stlScanLastProcessedTSValue),"stl_scan",job_configs)
+returnDF=functions.runQuery("select '{}' as clusterId,trunc(starttime) as startDate,* from stl_scan where endtime > '{}'".format(clusterId,stlScanLastProcessedTSValue),"stl_scan",job_configs)
 functions.saveToS3(returnDF,s3Prefix,"stl_scan",["clusterid","startdate"],job_configs)
-latestTimestampVal=functions.getMaxValue(returnDF,"starttime",job_configs)
+latestTimestampVal=functions.getMaxValue(returnDF,"endtime",job_configs)
 functions.updateLastProcessedTSValue(clusterId+"_stl_scan",latestTimestampVal[0],job_configs)
 
 #### STL_WLM_QUERY #####
 
 stlWLMQueryLastProcessedTSValue= functions.getLastProcessedTSValue(clusterId+"_stl_wlm_query",job_configs)
-returnDF=functions.runQuery("select '{}' as clusterId,trunc(queue_start_time) as startDate,* from stl_wlm_query where queue_start_time > '{}'".format(clusterId,stlWLMQueryLastProcessedTSValue),"stl_wlm_query",job_configs)
+returnDF=functions.runQuery("select '{}' as clusterId,trunc(queue_start_time) as startDate,* from stl_wlm_query where queue_end_time > '{}'".format(clusterId,stlWLMQueryLastProcessedTSValue),"stl_wlm_query",job_configs)
 functions.saveToS3(returnDF,s3Prefix,"stl_wlm_query",["clusterid","startdate"],job_configs)
-latestTimestampVal=functions.getMaxValue(returnDF,"queue_start_time",job_configs)
+latestTimestampVal=functions.getMaxValue(returnDF,"queue_end_time",job_configs)
 functions.updateLastProcessedTSValue(clusterId+"_stl_wlm_query",latestTimestampVal[0],job_configs)
 
 
