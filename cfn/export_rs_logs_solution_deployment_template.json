@@ -163,7 +163,7 @@
                                    "import urllib2",
                                    "import gc",
                                    "def lambda_handler(event,context):",
-                                   "    repo_name='https://github.com/KarthikSonti/aws-blog-building-serverless-incremental-export-solution-from-across-multiple-redshift-clusters/'",
+                                   "    repo_name='https://github.com/KarthikSonti/aws-blog-retain-system-tables-and-run-diagnostic-queries-spanning-multiple-amazon-redshift-clusters/'",
                                    "    libs_map={'libs/pg8000.zip':repo_name+'blob/master/libs/pg8000.zip?raw=true',",
                                    "    'libs/minimal-json-0.9.4.jar':repo_name+'blob/master/libs/minimal-json-0.9.4.jar?raw=true',",
                                    "    'libs/spark-redshift_2.10-2.0.1.jar':repo_name+'blob/master/libs/spark-redshift_2.10-2.0.1.jar?raw=true',",
