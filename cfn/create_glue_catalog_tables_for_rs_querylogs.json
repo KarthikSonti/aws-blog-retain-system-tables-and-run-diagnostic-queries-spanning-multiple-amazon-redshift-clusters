@@ -1,0 +1,726 @@
+{
+
+        "AWSTemplateFormatVersion":"2010-09-09",
+        "Description": "The main stack to deploy export solution",
+        "Parameters":{
+                "S3Bucket":{
+                    "Type": "String",
+                    "Default":"mybucket",
+                    "Description":"Provide the name of the bucket. This is same bucket name you used while deploying the solution This is the bucket where system tables will be exported under the prefix 'extract_redshift_query_logs/data' and code will be copied under the prefix 'extract_redshift_query_logs/code'"
+                }
+            },
+        "Resources": {
+        "Database":{
+          "Type" : "AWS::Glue::Database",
+          "Properties" : {
+            "DatabaseInput" : {
+
+          "Description" : "Database for all the external table storing  query logs spanning multiple clusters",
+          "Name" : "redshift_query_logs_db"
+
+        },
+            "CatalogId" : {"Ref":"AWS::AccountId"}
+          }
+        },
+        "ExternalSTLQuery":{
+            "Type" : "AWS::Glue::Table",
+             "DependsOn" : "Database",
+            "Properties" : {
+                "TableInput" : {
+                      "Description" : "External table for STL_Query",
+                      "TableType" : "EXTERNAL_TABLE",
+                      "StorageDescriptor" : {
+                            "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                            "SortColumns": [],
+                            "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                            "SerdeInfo": {
+                                "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                "Parameters": {
+                                    "serialization.format": "1"
+                                }
+                            },
+                            "Location": {"Fn::Join": ["/",["s3:/",{ "Ref" : "S3Bucket" },"extract_redshift_query_logs","data","stl_query"]]},
+                            "NumberOfBuckets": -1,
+                            "StoredAsSubDirectories": false,
+                            "Columns": [
+                                {
+                                    "Type": "int",
+                                    "Name": "userid"
+                                },
+                                {
+                                    "Type": "int",
+                                    "Name": "query"
+                                },
+                                {
+                                    "Type": "string",
+                                    "Name": "label"
+                                },
+                                {
+                                    "Type": "bigint",
+                                    "Name": "xid"
+                                },
+                                {
+                                    "Type": "int",
+                                    "Name": "pid"
+                                },
+                                {
+                                    "Type": "string",
+                                    "Name": "database"
+                                },
+                                {
+                                    "Type": "string",
+                                    "Name": "querytxt"
+                                },
+                                {
+                                    "Type": "timestamp",
+                                    "Name": "starttime"
+                                },
+                                {
+                                    "Type": "timestamp",
+                                    "Name": "endtime"
+                                },
+                                {
+                                    "Type": "int",
+                                    "Name": "aborted"
+                                },
+                                {
+                                    "Type": "int",
+                                    "Name": "insert_pristine"
+                                }
+                            ],
+                            "Compressed": false
+                        },
+                      "PartitionKeys" : [
+                          {
+                              "Type": "string",
+                              "Name": "clusterid"
+                          },
+                          {
+                              "Type": "date",
+                              "Name": "startdate"
+                          }
+                      ],
+                      "Name" : "ext_stl_query",
+                      "Parameters": {
+                          "classification": "parquet"
+                      }
+                    },
+                "DatabaseName" : "redshift_query_logs_db",
+                "CatalogId" : {"Ref":"AWS::AccountId"}
+            }
+        },
+
+
+    "ExternalSTLQueryText":{
+        "Type" : "AWS::Glue::Table",
+         "DependsOn" : "Database",
+        "Properties" : {
+            "TableInput" : {
+                  "Description" : "External table for STL_QueryText",
+                  "TableType" : "EXTERNAL_TABLE",
+                  "StorageDescriptor": {
+                        "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                        "SortColumns": [],
+                        "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                        "SerdeInfo": {
+                            "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                            "Parameters": {
+                                "serialization.format": "1"
+                            }
+                        },
+                        "Location": {"Fn::Join": ["/",["s3:/",{ "Ref" : "S3Bucket" },"extract_redshift_query_logs","data","stl_querytext"]]},
+                        "NumberOfBuckets": -1,
+                        "StoredAsSubDirectories": false,
+                        "Columns": [
+                            {
+                                "Type": "int",
+                                "Name": "userid"
+                            },
+                            {
+                                "Type": "int",
+                                "Name": "query"
+                            },
+                            {
+                                "Type": "bigint",
+                                "Name": "xid"
+                            },
+                            {
+                                "Type": "int",
+                                "Name": "pid"
+                            },
+                            {
+                                "Type": "int",
+                                "Name": "sequence"
+                            },
+                            {
+                                "Type": "string",
+                                "Name": "text"
+                            }
+                        ],
+                        "Compressed": false
+                    },
+                  "PartitionKeys" : [
+                      {
+                          "Type": "string",
+                          "Name": "clusterid"
+                      },
+                      {
+                          "Type": "date",
+                          "Name": "startdate"
+                      }
+                  ],
+                  "Name" : "ext_stl_querytext",
+                  "Parameters": {
+                      "classification": "parquet"
+                  }
+                },
+            "DatabaseName" : "redshift_query_logs_db",
+            "CatalogId" : {"Ref":"AWS::AccountId"}
+        }
+    },
+
+
+        "ExternalSTLUtilityText":{
+            "Type" : "AWS::Glue::Table",
+             "DependsOn" : "Database",
+            "Properties" : {
+                "TableInput" : {
+                      "Description" : "External table for STL_UtilityText",
+                      "TableType" : "EXTERNAL_TABLE",
+                      "StorageDescriptor": {
+                            "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                            "SortColumns": [],
+                            "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                            "SerdeInfo": {
+                                "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                "Parameters": {
+                                    "serialization.format": "1"
+                                }
+                            },
+                            "Location": {"Fn::Join": ["/",["s3:/",{ "Ref" : "S3Bucket" },"extract_redshift_query_logs","data","stl_utilitytext"]]},
+                            "NumberOfBuckets": -1,
+                            "StoredAsSubDirectories": false,
+                            "Columns": [
+                                {
+                                    "Type": "int",
+                                    "Name": "userid"
+                                },
+                                {
+                                    "Type": "bigint",
+                                    "Name": "xid"
+                                },
+                                {
+                                    "Type": "int",
+                                    "Name": "pid"
+                                },
+                                {
+                                    "Type": "string",
+                                    "Name": "label"
+                                },
+                                {
+                                    "Type": "timestamp",
+                                    "Name": "starttime"
+                                },
+                                {
+                                    "Type": "timestamp",
+                                    "Name": "endtime"
+                                },
+                                {
+                                    "Type": "int",
+                                    "Name": "sequence"
+                                },
+                                {
+                                    "Type": "string",
+                                    "Name": "text"
+                                }
+                            ],
+                            "Compressed": false
+                        },
+                      "PartitionKeys" : [
+                          {
+                              "Type": "string",
+                              "Name": "clusterid"
+                          },
+                          {
+                              "Type": "date",
+                              "Name": "startdate"
+                          }
+                      ],
+                      "Name" : "ext_stl_utilitytext",
+                      "Parameters": {
+                          "classification": "parquet"
+                      }
+                    },
+                "DatabaseName" : "redshift_query_logs_db",
+                "CatalogId" : {"Ref":"AWS::AccountId"}
+            }
+        },
+
+                "ExternalSTLDDLText":{
+                    "Type" : "AWS::Glue::Table",
+                     "DependsOn" : "Database",
+                    "Properties" : {
+                        "TableInput" : {
+                              "Description" : "External table for STL_DDLText",
+                              "TableType" : "EXTERNAL_TABLE",
+                              "StorageDescriptor":{
+                                    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                    "SortColumns": [],
+                                    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                    "SerdeInfo": {
+                                        "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                        "Parameters": {
+                                            "serialization.format": "1"
+                                        }
+                                    },
+                                    "Location": {"Fn::Join": ["/",["s3:/",{ "Ref" : "S3Bucket" },"extract_redshift_query_logs","data","stl_ddltext"]]},
+                                    "NumberOfBuckets": -1,
+                                    "StoredAsSubDirectories": false,
+                                    "Columns": [
+                                        {
+                                            "Type": "int",
+                                            "Name": "userid"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "xid"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "pid"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "label"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "starttime"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "endtime"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "sequence"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "text"
+                                        }
+                                    ],
+                                    "Compressed": false
+                                },
+                              "PartitionKeys" : [
+                                  {
+                                      "Type": "string",
+                                      "Name": "clusterid"
+                                  },
+                                  {
+                                      "Type": "date",
+                                      "Name": "startdate"
+                                  }
+                              ],
+                              "Name" : "ext_stl_ddltext",
+                              "Parameters": {
+                                  "classification": "parquet"
+                              }
+                            },
+                        "DatabaseName" : "redshift_query_logs_db",
+                        "CatalogId" : {"Ref":"AWS::AccountId"}
+                    }
+                },
+
+                "ExternalSTLExplain":{
+                    "Type" : "AWS::Glue::Table",
+                     "DependsOn" : "Database",
+                    "Properties" : {
+                        "TableInput" : {
+                              "Description" : "External table for STL_Explain",
+                              "TableType" : "EXTERNAL_TABLE",
+                              "StorageDescriptor":{
+                                    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                    "SortColumns": [],
+                                    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                    "SerdeInfo": {
+                                        "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                        "Parameters": {
+                                            "serialization.format": "1"
+                                        }
+                                    },
+                                    "Location": {"Fn::Join": ["/",["s3:/",{ "Ref" : "S3Bucket" },"extract_redshift_query_logs","data","stl_explain"]]},
+                                    "NumberOfBuckets": -1,
+                                    "StoredAsSubDirectories": false,
+                                    "Columns": [
+                                        {
+                                            "Type": "int",
+                                            "Name": "userid"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "query"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "nodeid"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "parentid"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "plannode"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "info"
+                                        }
+                                    ],
+                                    "Compressed": false
+                                },
+                              "PartitionKeys" : [
+                                  {
+                                      "Type": "string",
+                                      "Name": "clusterid"
+                                  },
+                                  {
+                                      "Type": "date",
+                                      "Name": "startdate"
+                                  }
+                              ],
+                              "Name" : "ext_stl_explain",
+                              "Parameters": {
+                                  "classification": "parquet"
+                              }
+                            },
+                        "DatabaseName" : "redshift_query_logs_db",
+                        "CatalogId" : {"Ref":"AWS::AccountId"}
+                    }
+                },
+                "ExternalSTLALertEventLog":{
+                    "Type" : "AWS::Glue::Table",
+                     "DependsOn" : "Database",
+                    "Properties" : {
+                        "TableInput" : {
+                              "Description" : "External table for stl_alert_event_log",
+                              "TableType" : "EXTERNAL_TABLE",
+                              "StorageDescriptor":{
+                                    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                    "SortColumns": [],
+                                    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                    "SerdeInfo": {
+                                        "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                        "Parameters": {
+                                            "serialization.format": "1"
+                                        }
+                                    },
+                                    "Location": {"Fn::Join": ["/",["s3:/",{ "Ref" : "S3Bucket" },"extract_redshift_query_logs","data","stl_alert_event_log"]]},
+                                    "NumberOfBuckets": -1,
+                                    "StoredAsSubDirectories": false,
+                                    "Columns": [
+                                        {
+                                            "Type": "int",
+                                            "Name": "userid"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "query"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "slice"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "segment"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "step"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "pid"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "xid"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "event"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "solution"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "event_time"
+                                        }
+                                    ],
+                                    "Compressed": false
+                                },
+                              "PartitionKeys" : [
+                                  {
+                                      "Type": "string",
+                                      "Name": "clusterid"
+                                  },
+                                  {
+                                      "Type": "date",
+                                      "Name": "startdate"
+                                  }
+                              ],
+                              "Name" : "ext_stl_alert_event_log",
+                              "Parameters": {
+                                  "classification": "parquet"
+                              }
+                            },
+                        "DatabaseName" : "redshift_query_logs_db",
+                        "CatalogId" : {"Ref":"AWS::AccountId"}
+                    }
+                },
+                "ExternalSTLScan":{
+                    "Type" : "AWS::Glue::Table",
+                     "DependsOn" : "Database",
+                    "Properties" : {
+                        "TableInput" : {
+                              "Description" : "External table for stl_scan",
+                              "TableType" : "EXTERNAL_TABLE",
+                              "StorageDescriptor":{
+                                    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                    "SortColumns": [],
+                                    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                    "SerdeInfo": {
+                                        "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                        "Parameters": {
+                                            "serialization.format": "1"
+                                        }
+                                    },
+                                    "Location": {"Fn::Join": ["/",["s3:/",{ "Ref" : "S3Bucket" },"extract_redshift_query_logs","data","stl_scan"]]},
+                                    "NumberOfBuckets": -1,
+                                    "StoredAsSubDirectories": false,
+                                    "Columns": [
+                                        {
+                                            "Type": "int",
+                                            "Name": "userid"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "query"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "slice"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "segment"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "step"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "starttime"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "endtime"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "tasknum"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "rows"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "bytes"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "fetches"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "type"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "tbl"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "is_rrscan"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "is_delayed_scan"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "rows_pre_filter"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "rows_pre_user_filter"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "perm_table_name"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "is_rlf_scan"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "is_rlf_scan_reason"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "num_em_blocks"
+                                        }
+                                    ],
+                                    "Compressed": false
+                                },
+                              "PartitionKeys" : [
+                                  {
+                                      "Type": "string",
+                                      "Name": "clusterid"
+                                  },
+                                  {
+                                      "Type": "date",
+                                      "Name": "startdate"
+                                  }
+                              ],
+                              "Name" : "ext_stl_scan",
+                              "Parameters": {
+                                  "classification": "parquet"
+                              }
+                            },
+                        "DatabaseName" : "redshift_query_logs_db",
+                        "CatalogId" : {"Ref":"AWS::AccountId"}
+                    }
+                },
+                "ExternalSTLWLMQuery":{
+                    "Type" : "AWS::Glue::Table",
+                     "DependsOn" : "Database",
+                    "Properties" : {
+                        "TableInput" : {
+                              "Description" : "External table for stl_wlm_query",
+                              "TableType" : "EXTERNAL_TABLE",
+                              "StorageDescriptor":{
+                                    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                    "SortColumns": [],
+                                    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                    "SerdeInfo": {
+                                        "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                        "Parameters": {
+                                            "serialization.format": "1"
+                                        }
+                                    },
+                                    "Location": {"Fn::Join": ["/",["s3:/",{ "Ref" : "S3Bucket" },"extract_redshift_query_logs","data","stl_wlm_query"]]},
+                                    "NumberOfBuckets": -1,
+                                    "StoredAsSubDirectories": false,
+                                    "Columns": [
+                                        {
+                                            "Type": "int",
+                                            "Name": "userid"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "xid"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "task"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "query"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "service_class"
+                                        },
+                                        {
+                                            "Type": "int",
+                                            "Name": "slot_count"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "service_class_start_time"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "queue_start_time"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "queue_end_time"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "total_queue_time"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "exec_start_time"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "exec_end_time"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "total_exec_time"
+                                        },
+                                        {
+                                            "Type": "timestamp",
+                                            "Name": "service_class_end_time"
+                                        },
+                                        {
+                                            "Type": "string",
+                                            "Name": "final_state"
+                                        },
+                                        {
+                                            "Type": "bigint",
+                                            "Name": "est_peak_mem"
+                                        }
+                                    ],
+                                    "Compressed": false
+                                },
+                              "PartitionKeys" : [
+                                  {
+                                      "Type": "string",
+                                      "Name": "clusterid"
+                                  },
+                                  {
+                                      "Type": "date",
+                                      "Name": "startdate"
+                                  }
+                              ],
+                              "Name" : "ext_stl_wlm_query",
+                              "Parameters": {
+                                  "classification": "parquet"
+                              }
+                            },
+                        "DatabaseName" : "redshift_query_logs_db",
+                        "CatalogId" : {"Ref":"AWS::AccountId"}
+                    }
+                }
+
+
+
+
+
+
+}
+}
