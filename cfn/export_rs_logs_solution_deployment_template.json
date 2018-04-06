@@ -1,6 +1,6 @@
 {
 "AWSTemplateFormatVersion":"2010-09-09",
-"Description": "The main stack to deploy export solution",
+"Description": "The main stack to deploy the Amazon Redshift clusters system tables export solution",
 "Parameters":{
         "S3Bucket":{
             "Type": "String",
