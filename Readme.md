@@ -17,5 +17,5 @@ Another CloudFormation template I provide later in this post helps to automate t
 Information on resolving some of the common errors you may experience in this solution can be found [here](/Common_Errors.md)
 
 ### Cross Cluster Diagnostic Queries
-Once you completed both items outlined in the blog : __Solution deployment__ and __Querying the exported sytem tables__, the Amazon Athena compatible cross cluster diagnostic queries can be found  [here](/cross_cluster_diagnostic_queries.md)
+Once you completed the deployment steps outlined in the blog in the sections: __Solution deployment__ and __Querying the exported sytem tables__, the Amazon Athena compatible cross cluster diagnostic queries can be found  [here](/cross_cluster_diagnostic_queries.md)
 
